@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Concentrado de pago — 2025-S23</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Arial,sans-serif;font-size:13px;background:#f5f5f5;color:#222}
+
+  .header{background:#1F4E79;color:#fff;padding:16px 24px}
+  .header h1{font-size:17px;font-weight:600;margin-bottom:4px}
+  .header p{font-size:12px;opacity:.8}
+
+  .progreso{display:flex;gap:6px;align-items:center;padding:10px 24px;
+             background:#fff;border-bottom:1px solid #eee;flex-wrap:wrap}
+  .paso-prog{display:flex;align-items:center;gap:4px;font-size:11px;color:#999}
+  .paso-prog.activo{color:#1F4E79;font-weight:600}
+  .paso-prog.hecho{color:#1a7a4a}
+  .circulo{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;
+            justify-content:center;font-size:10px;font-weight:700;background:#eee;color:#999}
+  .circulo.activo{background:#1F4E79;color:#fff}
+  .circulo.hecho{background:#1a7a4a;color:#fff}
+  .linea-prog{width:20px;height:2px;background:#eee}
+  .linea-prog.hecho{background:#1a7a4a}
+
+  .resumen{display:flex;gap:12px;padding:10px 24px;background:#fff;
+            border-bottom:1px solid #eee;flex-wrap:wrap}
+  .card-res{background:#f8f8f8;border:1px solid #e0e0e0;border-radius:8px;padding:8px 14px;min-width:130px}
+  .card-res .et{font-size:11px;color:#666;margin-bottom:2px}
+  .card-res .vl{font-size:15px;font-weight:700;color:#1F4E79}
+  .card-res.tot .vl{color:#1a7a4a;font-size:17px}
+
+  .toolbar{display:flex;gap:8px;padding:10px 24px;background:#fff;
+            border-bottom:1px solid #ddd;flex-wrap:wrap;align-items:center}
+  .lbl-toolbar{font-size:11px;color:#888;font-weight:600;width:100%;margin-bottom:2px}
+  .btn{padding:7px 14px;border:none;border-radius:6px;cursor:pointer;
+        font-size:12px;font-weight:600;transition:opacity .15s}
+  .btn:hover{opacity:.85}
+  .btn-p6       {background:#2E75B6;color:#fff}
+  .btn-dirrev   {background:#1F4E79;color:#fff}
+  .btn-dirtrans {background:#7030A0;color:#fff}
+  .btn-p1       {background:#B86E00;color:#fff}
+  .btn-dirpaga  {background:#1a7a4a;color:#fff}
+  .btn-sec      {background:#eee;color:#333}
+
+  .leyenda{display:flex;gap:14px;padding:6px 24px 8px;font-size:11px;
+            color:#666;background:#fff;border-bottom:1px solid #eee;flex-wrap:wrap}
+  .dot{display:inline-block;width:10px;height:10px;border-radius:2px;
+        margin-right:3px;vertical-align:middle}
+
+  .contenedor-tabla{padding:14px 24px;overflow-x:auto}
+  table{width:100%;border-collapse:collapse;background:#fff;border-radius:8px;
+         overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+  th{background:#1F4E79;color:#fff;padding:9px 7px;font-size:11px;
+      font-weight:600;text-align:left;white-space:nowrap}
+  td{padding:9px 7px;border-bottom:1px solid #f0f0f0;vertical-align:middle}
+  tr:hover td{background:#f8fbff}
+  tr.rev-dir td{background:#f0f4ff}
+  tr.pagado td{background:#f0fbf4}
+
+  .col-num{width:32px;text-align:center;color:#999}
+  .col-folio{width:110px}
+  .col-tipo{width:75px}
+  .col-monto{width:95px;text-align:right;font-family:monospace}
+  .col-check{width:46px;text-align:center}
+  .col-accion{width:85px;text-align:center}
+  .total-cell{font-weight:700;color:#1a7a4a}
+  .proveedor{font-weight:600;color:#1F4E79}
+  .rfc{font-size:11px;color:#888;margin-top:2px}
+
+  .chk{width:15px;height:15px;cursor:pointer}
+  .chk-p6     {accent-color:#2E75B6}
+  .chk-dirrev {accent-color:#1F4E79}
+  .chk-p1     {accent-color:#B86E00}
+  .chk-dirpaga{accent-color:#1a7a4a}
+
+  .btn-ver{padding:4px 9px;font-size:11px;background:#f0f0f0;color:#333;
+            border:none;border-radius:4px;cursor:pointer}
+  .btn-ver:hover{background:#ddd}
+
+  .badge{display:inline-block;padding:3px 10px;border-radius:12px;
+          font-size:11px;font-weight:600}
+  .badge-pend{background:#fff3cd;color:#856404}
+  .badge-rev {background:#d1e7dd;color:#0f5132}
+  .badge-cap {background:#fff3cd;color:#664d03}
+  .badge-ok  {background:#cfe2ff;color:#084298}
+
+  .modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;
+                  background:rgba(0,0,0,.45);z-index:1000;
+                  align-items:center;justify-content:center}
+  .modal-overlay.activo{display:flex}
+  .modal{background:#fff;border-radius:10px;padding:22px;max-width:600px;
+          width:92%;max-height:85vh;overflow-y:auto;
+          box-shadow:0 8px 32px rgba(0,0,0,.2)}
+  .modal h2{font-size:15px;color:#1F4E79;margin-bottom:12px}
+  .campo{display:flex;gap:8px;margin-bottom:7px;font-size:12px}
+  .campo .et{color:#888;width:150px;flex-shrink:0}
+  .campo .vl{font-weight:600}
+  .sep{border:none;border-top:1px solid #eee;margin:10px 0}
+  .tbl-conc{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
+  .tbl-conc th{background:#f0f0f0;padding:6px 8px;text-align:left;font-size:11px}
+  .tbl-conc td{padding:5px 8px;border-bottom:1px solid #f5f5f5}
+  .monto{text-align:right;font-family:monospace}
+  .btn-pdf{display:inline-block;padding:5px 12px;border-radius:5px;font-size:12px;
+            font-weight:600;text-decoration:none;color:#fff;margin-right:6px;margin-top:8px}
+  .btn-pdf-fac{background:#1F4E79}
+  .btn-pdf-rem{background:#1a7a4a}
+  .btn-pdf-dis{background:#ccc;cursor:not-allowed}
+  .modal-footer{margin-top:14px;display:flex;justify-content:flex-end;gap:8px}
+
+  .historial{padding:0 24px 20px}
+  .historial h3{font-size:12px;color:#555;margin-bottom:6px}
+  .hist-box{font-size:12px;color:#666;background:#fff;border:1px solid #eee;
+             border-radius:8px;padding:10px 14px;min-height:36px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Concentrado de pago — 2025-S23</h1>
+  <p>Generado el 26/06/2026 18:27 &nbsp;|&nbsp; 1 facturas &nbsp;|&nbsp;
+     Estado: <span id="badge" class="badge badge-pend">Pendiente — Pagos6</span></p>
+</div>
+
+<!-- Barra de progreso -->
+<div class="progreso" id="progreso">
+  <div class="paso-prog activo" id="paso-1"><div class="circulo activo">1</div>Pagos6 prepara lote</div>
+  <div class="linea-prog" id="l1"></div>
+  <div class="paso-prog" id="paso-2"><div class="circulo">2</div>Director revisa</div>
+  <div class="linea-prog" id="l2"></div>
+  <div class="paso-prog" id="paso-3"><div class="circulo">3</div>Pagos1 captura banco</div>
+  <div class="linea-prog" id="l3"></div>
+  <div class="paso-prog" id="paso-4"><div class="circulo">4</div>Director transfiere</div>
+  <div class="linea-prog" id="l4"></div>
+  <div class="paso-prog" id="paso-5"><div class="circulo">5</div>Director verifica comprobante</div>
+</div>
+
+<!-- Resumen de totales -->
+<div class="resumen">
+  <div class="card-res"><div class="et">Subtotal</div><div class="vl">$69,250.00</div></div>
+  <div class="card-res"><div class="et">IVA</div><div class="vl">$10,747.60</div></div>
+  <div class="card-res tot"><div class="et">Total a pagar</div><div class="vl">$77,920.10</div></div>
+  <div class="card-res"><div class="et">Facturas</div><div class="vl">1</div></div>
+  <div class="card-res"><div class="et">Semana</div><div class="vl">2025-S23</div></div>
+</div>
+
+<!-- Botones de acción por rol -->
+<div class="toolbar">
+  <div class="lbl-toolbar">Acciones del proceso — oprimir en orden:</div>
+  <button class="btn btn-p6"       onclick="accionPagos6()">📤 Pagos6 — Enviar a revisión del Director</button>
+  <button class="btn btn-dirrev"   onclick="accionDirRevisar()">🔍 Director — Revisar y autorizar lote</button>
+  <button class="btn btn-p1"       onclick="accionPagos1()">🏦 Pagos1 — Captura en banco finalizada</button>
+  <button class="btn btn-dirtrans" onclick="accionDirTransferir()">💸 Director — Realizar transferencia bancaria</button>
+  <button class="btn btn-dirpaga"  onclick="accionDirVerificar()">✅ Director — Verificar comprobante de pago</button>
+  <button class="btn btn-sec"      onclick="window.print()">🖨 Imprimir</button>
+</div>
+
+<!-- Leyenda de checks -->
+<div class="leyenda">
+  <span><span class="dot" style="background:#2E75B6"></span>Pagos6 = Lote preparado y enviado</span>
+  <span><span class="dot" style="background:#1F4E79"></span>DirRev = Revisado y autorizado por Director</span>
+  <span><span class="dot" style="background:#B86E00"></span>Pagos1 = Capturado en banco</span>
+  <span><span class="dot" style="background:#1a7a4a"></span>DirPaga = Transferencia realizada y verificada</span>
+</div>
+
+<!-- Tabla de facturas -->
+<div class="contenedor-tabla">
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Proveedor / RFC / Folio ERP</th>
+        <th>Folio SAT / Fecha</th>
+        <th>Tipo</th>
+        <th>Subtotal</th>
+        <th>IVA</th>
+        <th>Total</th>
+        <th title="Preparado por Pagos6">☑ P6</th>
+        <th title="Revisado por Director">☑ DirRev</th>
+        <th title="Capturado por Pagos1">☑ P1</th>
+        <th title="Transferencia realizada — Director">☑ DirPaga</th>
+        <th>Detalle</th>
+      </tr>
+    </thead>
+    <tbody id="tbody">
+      
+        <tr id="fila-0">
+          <td class="col-num">1</td>
+          <td>
+            <div class="proveedor">FABRICA MARIA</div>
+            <div class="rfc">FMA861013AW0 &nbsp;|&nbsp; ERP: <strong>FMA861013AW0FFMA0000006001</strong></div>
+          </td>
+          <td class="col-folio">
+            <div>FMA6001</div>
+            <div class="rfc">2026-05-29</div>
+          </td>
+          <td class="col-tipo">Ingreso</td>
+          <td class="col-monto">$69,250.00</td>
+          <td class="col-monto">$10,747.60</td>
+          <td class="col-monto total-cell">$77,920.10</td>
+          <td class="col-check"><input type="checkbox" class="chk chk-p6"    id="p6-0"    onchange="actualizarCheck(0,'p6')"></td>
+          <td class="col-check"><input type="checkbox" class="chk chk-dirrev" id="dirrev-0" onchange="actualizarCheck(0,'dirrev')"></td>
+          <td class="col-check"><input type="checkbox" class="chk chk-p1"    id="p1-0"    onchange="actualizarCheck(0,'p1')"></td>
+          <td class="col-check"><input type="checkbox" class="chk chk-dirpaga" id="dirpaga-0" onchange="actualizarCheck(0,'dirpaga')"></td>
+          <td class="col-accion">
+            <button class="btn-ver" onclick="verDetalle(0)">Ver detalle</button>
+          </td>
+        </tr>
+    </tbody>
+    <tfoot>
+      <tr style="background:#f8f8f8;font-weight:700">
+        <td colspan="4" style="text-align:right;padding:9px 7px">TOTALES</td>
+        <td class="col-monto">$69,250.00</td>
+        <td class="col-monto">$10,747.60</td>
+        <td class="col-monto total-cell">$77,920.10</td>
+        <td colspan="5"></td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+
+<!-- Historial -->
+<div class="historial">
+  <h3>Historial de acciones</h3>
+  <div class="hist-box" id="historial"><em>Sin acciones registradas.</em></div>
+</div>
+
+<!-- Modal detalle -->
+<div class="modal-overlay" id="overlay" onclick="cerrarModal(event)">
+  <div class="modal">
+    <h2 id="modal-titulo">Detalle</h2>
+    <div id="modal-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-sec" onclick="cerrarModal()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const facturas  = [{"archivo": "FMA861013AW0FFMA0000006001.xml", "folio_erp": "FMA861013AW0FFMA0000006001", "uuid": "c060ea17-4db3-42e1-b5b4-658744e5d6c1", "serie_folio": "FMA6001", "fecha": "2026-05-29", "rfc_emisor": "FMA861013AW0", "proveedor": "FABRICA MARIA", "regimen": "601", "rfc_receptor": "GDT031209KS7", "subtotal": 69250.0, "iva": 10747.6, "total": 77920.1, "moneda": "MXN", "tipo": "Ingreso", "metodo_pago": "PPD", "forma_pago": "99", "conceptos": [{"descripcion": "CABEZA DE INDIO 180/160 VERDE", "cantidad": "1000", "unidad": "MTR", "precio_unitario": 44.52, "importe": 44520.0}, {"descripcion": "CABEZA DE INDIO 200/160 VERDE", "cantidad": "500", "unidad": "MTR", "precio_unitario": 49.46, "importe": 24730.0}], "tiene_pdf_fac": true, "tiene_pdf_rem": false, "nombre_pdf_fac": "FMA861013AW0FFMA0000006001.pdf", "nombre_pdf_rem": "FMA861013AW0FFMA0000006001_REM.pdf"}];
+const urlBase   = "";
+const SEMANA    = "2025-S23";
+const SITE_ID   = "e7deab1-4e63-492b-a6b9-7db1091645df";
+const LIST_ID   = "4454e6b3-e4bc-43c5-b550-c52306ec4c07";
+const checks    = facturas.map(() => ({p6:false, dirrev:false, p1:false, dirpaga:false}));
+let hist        = [];
+let listItemId  = null;   // ID del elemento en EstadoLotes
+let pasoActual  = 1;
+
+// ── Graph API helpers ──────────────────────────────────────────────────────
+async function getToken() {
+  // Usa la sesión MSAL que ya existe en el navegador de M365
+  const resp = await fetch(
+    `https://login.microsoftonline.com/gt2009.onmicrosoft.com/oauth2/v2.0/token`,
+    { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'},
+       body:'grant_type=urn:ietf:params:oauth2:grant-type:device_code&client_id=d3590ed6-52b3-4102-aeff-aad2292ab01c&scope=Sites.ReadWrite.All offline_access' }
+  );
+  // Fallback: usa fetch con credenciales de sesión SharePoint
+  return null;
+}
+
+async function spFetch(method, url, body) {
+  const headers = { 'Accept': 'application/json;odata=nometadata',
+                     'Content-Type': 'application/json' };
+  const opts = { method, headers, credentials: 'include' };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(url, opts);
+  if (!r.ok) throw new Error(`${method} ${url} → ${r.status}`);
+  if (method === 'PATCH' || r.status === 204) return {};
+  return r.json();
+}
+
+const SP_BASE = `https://gt2009.sharepoint.com/sites/Pagoaproveedores/_api/web/lists(guid'${LIST_ID}')/items`;
+
+async function cargarEstado() {
+  try {
+    const data = await spFetch('GET',
+      `${SP_BASE}?$filter=Semana eq '${SEMANA}'&$select=Id,Paso_Actual,Checks_P6,Checks_Dir,Checks_P1,Checks_DirPaga,Historial`);
+    if (data.value && data.value.length > 0) {
+      const item = data.value[0];
+      listItemId = item.Id;
+      pasoActual = item.Paso_Actual || 1;
+      // Restaurar checks
+      const restore = (campo, rol) => {
+        if (!item[campo]) return;
+        try {
+          const arr = JSON.parse(item[campo]);
+          arr.forEach((v,i) => {
+            checks[i][rol] = v;
+            const el = document.getElementById(`${rol}-${i}`);
+            if (el) el.checked = v;
+          });
+        } catch(e) {}
+      };
+      restore('Checks_P6','p6');
+      restore('Checks_Dir','dirrev');
+      restore('Checks_P1','p1');
+      restore('Checks_DirPaga','dirpaga');
+      // Restaurar historial
+      if (item.Historial) {
+        hist = item.Historial.split('
+').filter(Boolean);
+        renderHist();
+      }
+      // Restaurar colores de filas
+      facturas.forEach((_,i) => {
+        document.getElementById(`fila-${i}`).classList.toggle('rev-dir', checks[i].dirrev);
+        document.getElementById(`fila-${i}`).classList.toggle('pagado',  checks[i].dirpaga);
+      });
+      avanzar(pasoActual);
+    } else {
+      // Crear registro nuevo en la lista
+      const nuevo = await spFetch('POST', SP_BASE, {
+        Title: SEMANA, Semana: SEMANA, Paso_Actual: 1,
+        URL_Concentrado: window.location.href
+      });
+      listItemId = nuevo.Id || nuevo.id;
+    }
+  } catch(e) {
+    console.warn('EstadoLotes no disponible (modo local):', e.message);
+  }
+}
+
+async function guardarEstado(campos) {
+  if (!listItemId) return;
+  try {
+    await spFetch('PATCH', `${SP_BASE}(${listItemId})`, campos);
+  } catch(e) {
+    console.warn('No se pudo guardar estado:', e.message);
+  }
+}
+// ──────────────────────────────────────────────────────────────────────────
+
+function renderHist() {
+  document.getElementById('historial').innerHTML =
+    hist.length ? hist.map(h=>`<div style="padding:3px 0;border-bottom:1px solid #f5f5f5">${h}</div>`).join('') : '<em>Sin acciones registradas.</em>';
+}
+
+function reg(txt) {
+  const t = new Date().toLocaleString('es-MX');
+  hist.unshift(`[${t}] ${txt}`);
+  renderHist();
+  guardarEstado({ Historial: hist.join('
+') });
+}
+
+function actualizarCheck(i, rol) {
+  checks[i][rol] = document.getElementById(`${rol}-${i}`).checked;
+  const fila = document.getElementById(`fila-${i}`);
+  fila.classList.toggle('rev-dir', checks[i].dirrev);
+  fila.classList.toggle('pagado',  checks[i].dirpaga);
+  // Guardar checks en la lista
+  const campoMap = { p6:'Checks_P6', dirrev:'Checks_Dir', p1:'Checks_P1', dirpaga:'Checks_DirPaga' };
+  const arr = facturas.map((_,idx) => checks[idx][rol]);
+  guardarEstado({ [campoMap[rol]]: JSON.stringify(arr) });
+}
+
+function avanzar(n) {
+  for (let i=1;i<=5;i++) {
+    const paso  = document.getElementById(`paso-${i}`);
+    const circ  = paso.querySelector('.circulo');
+    const linea = document.getElementById(`l${i}`);
+    if (i<n)       { paso.className='paso-prog hecho';  circ.className='circulo hecho';  if(linea) linea.className='linea-prog hecho'; }
+    else if (i===n) { paso.className='paso-prog activo'; circ.className='circulo activo'; }
+    else           { paso.className='paso-prog';         circ.className='circulo';         if(linea) linea.className='linea-prog'; }
+  }
+}
+
+function setBadge(txt, cls) {
+  const b = document.getElementById('badge');
+  b.textContent = txt; b.className = 'badge ' + cls;
+}
+
+function accionPagos6() {
+  if (!confirm('¿Confirmas que el lote está listo para revisión del Director General?')) return;
+  facturas.forEach((_,i) => { checks[i].p6=true; document.getElementById(`p6-${i}`).checked=true; });
+  guardarEstado({ Checks_P6: JSON.stringify(facturas.map(()=>true)), Paso_Actual: 2 });
+  reg('Pagos6 envió el lote a revisión del Director General');
+  setBadge('En revisión — Director General', 'badge-pend');
+  avanzar(2);
+  // Disparar Flujo 2 — correo al Director con enlace al concentrado
+  const flowUrl = 'https://defaultdbf4219499c34923aa9cd39366e03b.22.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/7b2a9fd075214b8e96e3ad2a63b2694d/triggers/manual/paths/invoke?api-version=1';
+  fetch(flowUrl, { method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ URL_Concentrado: window.location.href }) })
+    .catch(() => {});
+  alert('✅ Lote enviado.\nEl Director recibirá correo con enlace al concentrado.');
+}
+
+function accionDirRevisar() {
+  if (!confirm('¿El Director General confirma que revisó todas las facturas y autoriza el lote?')) return;
+  facturas.forEach((_,i) => {
+    checks[i].dirrev=true;
+    document.getElementById(`dirrev-${i}`).checked=true;
+    document.getElementById(`fila-${i}`).classList.add('rev-dir');
+  });
+  guardarEstado({ Checks_Dir: JSON.stringify(facturas.map(()=>true)), Paso_Actual: 3 });
+  reg('Director General revisó y autorizó el lote completo');
+  setBadge('Autorizado — Director General', 'badge-rev');
+  avanzar(3);
+  alert('✅ Lote autorizado.\nPagos1 recibirá correo con enlace al concentrado.');
+}
+
+function accionPagos1() {
+  if (!confirm('¿Confirmas que terminaste de capturar todas las facturas en la página del banco?')) return;
+  facturas.forEach((_,i) => { checks[i].p1=true; document.getElementById(`p1-${i}`).checked=true; });
+  guardarEstado({ Checks_P1: JSON.stringify(facturas.map(()=>true)), Paso_Actual: 4 });
+  reg('Pagos1 confirmó que la captura en banco está finalizada');
+  setBadge('Capturado — pendiente transferencia Director', 'badge-pend');
+  avanzar(4);
+  alert('✅ Captura confirmada.\nEl Director recibirá correo para realizar las transferencias.');
+}
+
+function accionDirTransferir() {
+  if (!confirm('¿Pagos1 y el Director confirman que realizaron las transferencias bancarias?')) return;
+  guardarEstado({ Paso_Actual: 4 });
+  reg('Pagos1 y Director General confirmaron la realización de las transferencias bancarias');
+  setBadge('Transferencias realizadas — pendiente comprobante', 'badge-pend');
+  alert('✅ Transferencias registradas.\nPagos1 deberá subir el comprobante a la carpeta 03_Comprobantes.');
+}
+
+function accionDirVerificar() {
+  if (!confirm('¿El Director General verificó el comprobante de pago y coincide con el lote autorizado?')) return;
+  facturas.forEach((_,i) => {
+    checks[i].dirpaga=true;
+    document.getElementById(`dirpaga-${i}`).checked=true;
+    document.getElementById(`fila-${i}`).classList.add('pagado');
+  });
+  guardarEstado({ Checks_DirPaga: JSON.stringify(facturas.map(()=>true)), Paso_Actual: 5 });
+  reg('Director General verificó el comprobante de pago — ciclo completado');
+  setBadge('Completado — comprobante verificado', 'badge-ok');
+  avanzar(5);
+  alert('✅ Ciclo de pago completado.\nEl expediente digital queda cerrado en SharePoint.');
+}
+
+// Cargar estado al abrir el HTML
+window.addEventListener('DOMContentLoaded', cargarEstado);
+
+function verDetalle(i) {
+  const f = facturas[i];
+  const c = checks[i];
+  const pdfFac = f.tiene_pdf_fac
+    ? `<a href="${urlBase}${f.nombre_pdf_fac}" target="_blank" class="btn-pdf btn-pdf-fac">📄 Ver factura PDF</a>`
+    : `<span class="btn-pdf btn-pdf-dis">📄 Factura PDF no encontrada</span>`;
+  const pdfRem = f.tiene_pdf_rem
+    ? `<a href="${urlBase}${f.nombre_pdf_rem}" target="_blank" class="btn-pdf btn-pdf-rem">📋 Ver remisión PDF</a>`
+    : `<span class="btn-pdf btn-pdf-dis">📋 Remisión PDF no encontrada</span>`;
+
+  document.getElementById('modal-titulo').textContent =
+    `Folio ERP: ${f.folio_erp} — ${f.proveedor}`;
+
+  document.getElementById('modal-body').innerHTML = `
+    ${pdfFac}${pdfRem}
+    <hr class="sep" style="margin-top:12px">
+    <div class="campo"><span class="et">Proveedor</span><span class="vl">${f.proveedor}</span></div>
+    <div class="campo"><span class="et">RFC emisor</span><span class="vl">${f.rfc_emisor}</span></div>
+    <div class="campo"><span class="et">RFC receptor</span><span class="vl">${f.rfc_receptor}</span></div>
+    <div class="campo"><span class="et">Folio SAT</span><span class="vl">${f.serie_folio}</span></div>
+    <div class="campo"><span class="et">Folio ERP</span><span class="vl">${f.folio_erp}</span></div>
+    <div class="campo"><span class="et">Fecha</span><span class="vl">${f.fecha}</span></div>
+    <div class="campo"><span class="et">Tipo</span><span class="vl">${f.tipo}</span></div>
+    <div class="campo"><span class="et">Método de pago</span><span class="vl">${f.metodo_pago||'—'}</span></div>
+    <div class="campo"><span class="et">Forma de pago</span><span class="vl">${f.forma_pago||'—'}</span></div>
+    <div class="campo"><span class="et">Moneda</span><span class="vl">${f.moneda}</span></div>
+    <hr class="sep">
+    <div class="campo"><span class="et">Subtotal</span><span class="vl">${f.subtotal.toLocaleString('es-MX',{style:'currency',currency:'MXN'})}</span></div>
+    <div class="campo"><span class="et">IVA</span><span class="vl">${f.iva.toLocaleString('es-MX',{style:'currency',currency:'MXN'})}</span></div>
+    <div class="campo"><span class="et">Total</span><span class="vl" style="color:#1a7a4a;font-size:15px">${f.total.toLocaleString('es-MX',{style:'currency',currency:'MXN'})}</span></div>
+    <hr class="sep">
+    <div style="font-size:11px;color:#888;margin-bottom:8px;font-family:monospace">UUID: ${f.uuid}</div>
+    <hr class="sep">
+    <div style="font-weight:600;font-size:12px;margin-bottom:6px">Conceptos:</div>
+    <table class="tbl-conc">
+      <thead><tr><th>Cant / Unidad</th><th>Descripción</th><th class="monto">P. Unitario</th><th class="monto">Importe</th></tr></thead>
+      <tbody>
+        ${f.conceptos.map(c=>`<tr>
+          <td>${c.cantidad} ${c.unidad}</td>
+          <td>${c.descripcion}</td>
+          <td class="monto">${c.precio_unitario.toLocaleString('es-MX',{style:'currency',currency:'MXN'})}</td>
+          <td class="monto">${c.importe.toLocaleString('es-MX',{style:'currency',currency:'MXN'})}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+    <hr class="sep">
+    <div style="font-size:11px;color:#888">
+      ☑ P6: ${c.p6?'✓':'—'} &nbsp;|&nbsp;
+      ☑ DirRev: ${c.dirrev?'✓':'—'} &nbsp;|&nbsp;
+      ☑ P1: ${c.p1?'✓':'—'} &nbsp;|&nbsp;
+      ☑ DirPaga: ${c.dirpaga?'✓':'—'}
+    </div>
+  `;
+  document.getElementById('overlay').classList.add('activo');
+}
+
+function cerrarModal(e) {
+  if (!e || e.target===document.getElementById('overlay'))
+    document.getElementById('overlay').classList.remove('activo');
+}
+</script>
+</body>
+</html>
