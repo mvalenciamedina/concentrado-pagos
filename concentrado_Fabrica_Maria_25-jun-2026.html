@@ -119,7 +119,7 @@
 
 <div class="header">
   <h1>Concentrado de pago — Fabrica Maria 25-jun-2026</h1>
-  <p>Generado el 26/06/2026 18:48 &nbsp;|&nbsp; 1 facturas &nbsp;|&nbsp;
+  <p>Generado el 27/06/2026 14:09 &nbsp;|&nbsp; 1 facturas &nbsp;|&nbsp;
      Estado: <span id="badge" class="badge badge-pend">Pendiente — Pagos6</span></p>
 </div>
 
@@ -321,10 +321,25 @@ async function cargarEstado() {
   }
 }
 
+const FLOW_GUARDAR = 'https://defaultdbf4219499c34923aa9cd39366e03b.22.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/5638f3ac567f443ab5ea123e5376d028/triggers/manual/paths/invoke?api-version=1';
+
 async function guardarEstado(campos) {
-  if (!listItemId) return;
   try {
-    await spFetch('PATCH', `${SP_BASE}(${listItemId})`, campos);
+    const body = {
+      semana: SEMANA,
+      paso: campos.Paso_Actual !== undefined ? campos.Paso_Actual : pasoActual,
+      checks_p6: campos.Checks_P6 !== undefined ? campos.Checks_P6 : '',
+      checks_dir: campos.Checks_Dir !== undefined ? campos.Checks_Dir : '',
+      checks_p1: campos.Checks_P1 !== undefined ? campos.Checks_P1 : '',
+      checks_dirpaga: campos.Checks_DirPga !== undefined ? campos.Checks_DirPga : '',
+      historial: campos.Historial !== undefined ? campos.Historial : hist.join('\n'),
+      url_concentrado: window.location.href
+    };
+    await fetch(FLOW_GUARDAR, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body)
+    });
   } catch(e) {
     console.warn('No se pudo guardar estado:', e.message);
   }
