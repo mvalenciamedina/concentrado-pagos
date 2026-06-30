@@ -119,7 +119,7 @@
 
 <div class="header">
   <h1>Concentrado de pago — Fabrica Maria 25-jun-2026</h1>
-  <p>Generado el 27/06/2026 14:36 &nbsp;|&nbsp; 1 facturas &nbsp;|&nbsp;
+  <p>Generado el 30/06/2026 09:50 &nbsp;|&nbsp; 1 facturas &nbsp;|&nbsp;
      Estado: <span id="badge" class="badge badge-pend">Pendiente — Pagos6</span></p>
 </div>
 
@@ -321,7 +321,7 @@ async function cargarEstado() {
   }
 }
 
-const FLOW_GUARDAR = 'https://defaultdbf4219499c34923aa9cd39366e03b.22.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/5638f3ac567f443ab5ea123e5376d028/triggers/manual/paths/invoke?api-version=1';
+const FLOW_GUARDAR = 'https://defaultdbf4219499c34923aa9cd39366e03b.22.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/5638f3ac567f443ab5ea123e5376d028/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=meMCkM0uaAmePiMQJesd7IIT5J8UeCKfo1UNrqQKTSM';
 
 async function guardarEstado(campos) {
   try {
@@ -393,7 +393,7 @@ function accionPagos6() {
   setBadge('En revisión — Director General', 'badge-pend');
   avanzar(2);
   // Disparar Flujo 2 — correo al Director con enlace al concentrado
-  const flowUrl = 'https://defaultdbf4219499c34923aa9cd39366e03b.22.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/7b2a9fd075214b8e96e3ad2a63b2694d/triggers/manual/paths/invoke?api-version=1';
+  const flowUrl = 'https://defaultdbf4219499c34923aa9cd39366e03b.22.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/7b2a9fd075214b8e96e3ad2a63b2694d/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=SaNHvWeUt-FSU9jEKkzYut1Hu01PU8sIei7XQSBxvEU';
   fetch(flowUrl, { method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ URL_Concentrado: window.location.href }) })
     .catch(() => {});
