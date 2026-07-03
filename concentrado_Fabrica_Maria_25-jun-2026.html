@@ -119,7 +119,7 @@
 
 <div class="header">
   <h1>Concentrado de pago — Fabrica Maria 25-jun-2026</h1>
-  <p>Generado el 30/06/2026 09:50 &nbsp;|&nbsp; 1 facturas &nbsp;|&nbsp;
+  <p>Generado el 03/07/2026 11:54 &nbsp;|&nbsp; 1 facturas &nbsp;|&nbsp;
      Estado: <span id="badge" class="badge badge-pend">Pendiente — Pagos6</span></p>
 </div>
 
@@ -248,37 +248,21 @@ let hist        = [];
 let listItemId  = null;   // ID del elemento en EstadoLotes
 let pasoActual  = 1;
 
-// ── Graph API helpers ──────────────────────────────────────────────────────
-async function getToken() {
-  // Usa la sesión MSAL que ya existe en el navegador de M365
-  const resp = await fetch(
-    `https://login.microsoftonline.com/gt2009.onmicrosoft.com/oauth2/v2.0/token`,
-    { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'},
-       body:'grant_type=urn:ietf:params:oauth2:grant-type:device_code&client_id=d3590ed6-52b3-4102-aeff-aad2292ab01c&scope=Sites.ReadWrite.All offline_access' }
-  );
-  // Fallback: usa fetch con credenciales de sesión SharePoint
-  return null;
-}
-
-async function spFetch(method, url, body) {
-  const headers = { 'Accept': 'application/json;odata=nometadata',
-                     'Content-Type': 'application/json' };
-  const opts = { method, headers, credentials: 'include' };
-  if (body) opts.body = JSON.stringify(body);
-  const r = await fetch(url, opts);
-  if (!r.ok) throw new Error(`${method} ${url} → ${r.status}`);
-  if (method === 'PATCH' || r.status === 204) return {};
-  return r.json();
-}
-
-const SP_BASE = `https://gt2009.sharepoint.com/sites/Pagoaproveedores/_api/web/lists(guid'${LIST_ID}')/items`;
+// URL del flujo "Leer estado lote" — pega aquí la URL completa (con &sig=...)
+// que te da Power Automate al guardar el disparador HTTP "Anyone".
+const FLOW_LEER = 'https://defaultdbf4219499c34923aa9cd39366e03b.22.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/9e5e0f2a5c1545dc9a2641fe2d5e35a3/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=5sHJoIV5vThE3h4ZkPVmhg1oojUENUuBPpMlY7Q3UN0';
 
 async function cargarEstado() {
   try {
-    const data = await spFetch('GET',
-      `${SP_BASE}?$filter=Semana eq '${SEMANA}'&$select=Id,Paso_Actual,Checks_P6,Checks_Dir,Checks_P1,Checks_DirPaga,Historial`);
-    if (data.value && data.value.length > 0) {
-      const item = data.value[0];
+    const resp = await fetch(FLOW_LEER, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ semana: SEMANA })
+    });
+    if (!resp.ok) throw new Error(`Flujo Leer estado lote → ${resp.status}`);
+    const item = await resp.json();
+
+    if (item && item.encontrado) {
       listItemId = item.Id;
       pasoActual = item.Paso_Actual || 1;
       // Restaurar checks
@@ -309,12 +293,9 @@ async function cargarEstado() {
       });
       avanzar(pasoActual);
     } else {
-      // Crear registro nuevo en la lista
-      const nuevo = await spFetch('POST', SP_BASE, {
-        Title: SEMANA, Semana: SEMANA, Paso_Actual: 1,
-        URL_Concentrado: window.location.href
-      });
-      listItemId = nuevo.Id || nuevo.id;
+      // No existe el registro todavía: el propio flujo "Guardar estado lote"
+      // lo crea (upsert) en su primera escritura, así que solo inicializamos.
+      await guardarEstado({ Paso_Actual: 1 });
     }
   } catch(e) {
     console.warn('EstadoLotes no disponible (modo local):', e.message);
